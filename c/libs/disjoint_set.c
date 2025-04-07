@@ -1,9 +1,5 @@
+#include "disjoint_set.h"
 #include <stdlib.h>
-
-typedef struct {
-  int *representative;
-  int size;
-} disjoint_set;
 
 disjoint_set *disjoint_set_create(int size) {
   int *rep = malloc(size * sizeof(int));

@@ -1,23 +1,22 @@
+#include "hash_table.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#define DEFAULT_CAP 10000;
+
 // djb2 hash function: http://www.cse.yorku.ca/~oz/hash.html
-unsigned long hash_function(char *str, unsigned long long CAP) {
+unsigned long hash_function(char *str, unsigned long capacity) {
   unsigned long hash = 5381;
   int c;
   while ((c = *str++)) {
     hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
-    hash %= CAP;
+    hash %= capacity;
   }
   return hash;
 }
 
 // hash-table item
-typedef struct HashTableItem {
-  char *key;
-  char *val;
-} hash_table_item;
 
 hash_table_item *hash_table_item_create(char *key, char *val) {
   hash_table_item *item = (hash_table_item *)malloc(sizeof(hash_table_item));
@@ -35,10 +34,6 @@ void hash_table_item_free(hash_table_item *item) {
 }
 
 // hash-table linked-list
-typedef struct HashTableLinkedList {
-  hash_table_item *item;
-  struct HashTableLinkedList *next;
-} hash_table_linked_list;
 
 hash_table_linked_list *hash_table_linked_list_create() {
   hash_table_linked_list *node =
@@ -72,33 +67,30 @@ void hash_table_linked_list_free(hash_table_linked_list *head) {
   while (head) {
     temp = head;
     head = head->next;
-    free(temp->item->key);
-    free(temp->item->val);
-    free(temp->item);
+    hash_table_item_free(temp->item);
     free(temp);
   }
 }
 
 // hash table
-typedef struct HashTable {
-  unsigned long long size;
-  unsigned long long count;
-  hash_table_linked_list **overflow_bucket;
-  hash_table_item **items;
-} hash_table;
 
-hash_table *hash_table_create(unsigned long long size) {
-  hash_table *table = (hash_table *)malloc(sizeof(hash_table));
-  table->size = size;
-  table->count = 0;
-  table->items = (hash_table_item **)malloc(size * sizeof(hash_table_item *));
-  for (int i = 0; i < size; i++) {
-    table->items[i] = NULL;
+hash_table *hash_table_create(unsigned long capacity) {
+  if (capacity == 0) {
+    capacity = DEFAULT_CAP;
   }
+  hash_table *table = (hash_table *)malloc(sizeof(hash_table));
+  table->capacity = capacity;
+  table->size = 0;
+  hash_table_item **items =
+      (hash_table_item **)malloc(capacity * sizeof(hash_table_item *));
+  for (int i = 0; i < capacity; i++) {
+    items[i] = NULL;
+  }
+  table->items = items;
 
   hash_table_linked_list **buckets = (hash_table_linked_list **)malloc(
-      size * sizeof(hash_table_linked_list *));
-  for (int i = 0; i < size; i++) {
+      capacity * sizeof(hash_table_linked_list *));
+  for (int i = 0; i < capacity; i++) {
     buckets[i] = NULL;
   }
   table->overflow_bucket = buckets;
@@ -107,16 +99,16 @@ hash_table *hash_table_create(unsigned long long size) {
 }
 
 void hash_table_set(hash_table *table, char *key, char *val) {
-  int idx = hash_function(key, table->size);
+  int idx = hash_function(key, table->capacity);
   hash_table_item *cur = table->items[idx];
   if (cur == NULL) {
-    if (table->count == table->size) {
+    if (table->size == table->capacity) {
       printf("Insert Error: Hash Table is full\n");
       return;
     }
     hash_table_item *item = hash_table_item_create(key, val);
     table->items[idx] = item;
-    table->count++;
+    table->size++;
     return;
   }
   if (strcmp(cur->key, key) == 0) {
@@ -132,11 +124,10 @@ void hash_table_set(hash_table *table, char *key, char *val) {
     return;
   }
   table->overflow_bucket[idx] = hash_table_linked_list_insert(head, item);
-  return;
 }
 
 char *hash_table_get(hash_table *table, char *key) {
-  int idx = hash_function(key, table->size);
+  int idx = hash_function(key, table->capacity);
   hash_table_item *item = table->items[idx];
   hash_table_linked_list *head = table->overflow_bucket[idx];
   while (item != NULL) {
@@ -153,13 +144,13 @@ char *hash_table_get(hash_table *table, char *key) {
 }
 
 void hash_table_free(hash_table *table) {
-  for (int i = 0; i < table->size; i++) {
+  for (int i = 0; i < table->capacity; i++) {
     hash_table_item *item = table->items[i];
     if (item != NULL) {
       hash_table_item_free(item);
     }
   }
-  for (int i = 0; i < table->size; i++) {
+  for (int i = 0; i < table->capacity; i++) {
     hash_table_linked_list *item = table->overflow_bucket[i];
     if (item != NULL) {
       hash_table_linked_list_free(item);

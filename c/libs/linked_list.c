@@ -1,9 +1,5 @@
+#include "linked_list.h"
 #include <stdlib.h>
-
-typedef struct LinkedList {
-  int val;
-  struct LinkedList *next;
-} linked_list;
 
 linked_list *linked_list_create(int *arr, int len_arr) {
   linked_list *head = malloc(sizeof(linked_list));
