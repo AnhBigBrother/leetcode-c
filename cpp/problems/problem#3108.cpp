@@ -1,4 +1,4 @@
-#include "../utils/disjoint-set.cpp"
+#include "../utils/disjoint_set.hpp"
 #include <vector>
 
 using namespace std;

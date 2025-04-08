@@ -3,8 +3,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define DEFAULT_CAP 10000;
-
 // djb2 hash function: http://www.cse.yorku.ca/~oz/hash.html
 unsigned long hash_function(char *str, unsigned long capacity) {
   unsigned long hash = 5381;
@@ -75,9 +73,6 @@ void hash_table_linked_list_free(hash_table_linked_list *head) {
 // hash table
 
 hash_table *hash_table_create(unsigned long capacity) {
-  if (capacity == 0) {
-    capacity = DEFAULT_CAP;
-  }
   hash_table *table = (hash_table *)malloc(sizeof(hash_table));
   table->capacity = capacity;
   table->size = 0;

@@ -1,7 +1,7 @@
 build: 
-	clang -g -Wall -Werror -o ./bin/main main.c ./libs/*.c 
+	clang -g -Wall -Werror -o ./bin/main main.c ./utils/*.c 
 
 run: 
-	clang main.c ./libs/*.c -o ./bin/main && ./bin/main
+	clang main.c ./utils/*.c -o ./bin/main && ./bin/main
 
 .PHONY: build run
